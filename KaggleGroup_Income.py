@@ -34,14 +34,15 @@ x_mod['Work Experience in Current Job [years]'] = x_mod['Work Experience in Curr
 #plt.plot(X,Y)
 
 # Modifying the Datatype of columns
-x_mod.astype({'Year of Record': 'int64'}).dtypes
+#x_mod.astype({'Year of Record': 'int64'}).dtypes
 
 # Dealing with NaN
 #x_mod['Year of Record'].fillna(method = 'ffill', inplace = True)
-x_mod.dropna(subset = ['Year of Record', 'Work Experience in Current Job [years]', 'Satisfation with employer', 'Gender', 'Country', 'University Degree', 'Hair Color'])
+x_mod = x_mod.dropna(subset = ['Year of Record', 'Work Experience in Current Job [years]', 'Satisfation with employer', 'Gender', 'Country', 'University Degree', 'Hair Color','Profession'])
+#x_mod = x_mod.drop(['Year of Record'], axis = 1)
+#x_mod = x_mod.drop(['Work Experience in Current Job [years]'], axis = 1)
 
-
-x_mod['Yearly Income in addition to Salary (e.g. Rental Income)'].value_counts()
+x_mod['Year of Record'].value_counts()
 # Dealing with Categorial Data
 # Dropping Max Option Columns
 x_mod = x_mod.drop(['Instance', 'Country', 'Profession', 'Size of City', 'Yearly Income in addition to Salary (e.g. Rental Income)' ], axis = 1)
@@ -67,6 +68,8 @@ dummy = pd.get_dummies(x_mod['Hair Color'])
 x_mod = pd.concat([x_mod,dummy],axis = 1)
 x_mod = x_mod.drop(['Hair Color'],axis = 1)
 
+
+#np.any(np.isnan(x_mod))
 # Label Encoding
 
 
@@ -76,7 +79,9 @@ y_mod = x_mod.iloc[0:,-1]
 # Removing Target Income column from Input 
 x_mod = x_mod.drop(columns = 'Total Yearly Income [EUR]')
 
-x_train, x_test, y_train, y_test = train_test_split(x_mod, y_mod, test_size = 0.2)
+#x_mod = x_mod.iloc[1:,:]
+x_train, x_test, y_train, y_test = train_test_split(x_mod, y_mod, test_size = 0.3)
+
 
 model = LinearRegression()
 model.fit(x_train, y_train)
