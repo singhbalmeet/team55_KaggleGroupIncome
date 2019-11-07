@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import BayesianRidge
-from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_error as mae
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 import matplotlib.pyplot as plt
@@ -26,6 +26,10 @@ trainCol = pd.read_csv('tcd-ml-1920-group-income-train.csv')
 # Assign Training file to another variable where changes will be made
 x_mod = trainCol
 
+
+print(x_mod.shape)
+print(y_mod.shape)
+
 x_mod['Yearly Income in addition to Salary (e.g. Rental Income)'] = x_mod['Yearly Income in addition to Salary (e.g. Rental Income)'].str.replace(' EUR', '')
 x_mod['Work Experience in Current Job [years]'] = x_mod['Work Experience in Current Job [years]'].str.replace('#NUM!', '0')
 # Graph Plot
@@ -45,8 +49,9 @@ x_mod = x_mod.dropna(subset = ['Year of Record', 'Work Experience in Current Job
 x_mod['Year of Record'].value_counts()
 # Dealing with Categorial Data
 # Dropping Max Option Columns
-x_mod = x_mod.drop(['Instance', 'Country', 'Profession', 'Size of City', 'Yearly Income in addition to Salary (e.g. Rental Income)' ], axis = 1)
-
+x_mod = x_mod.drop(['Country', 'Profession', 'Size of City', 'Yearly Income in addition to Salary (e.g. Rental Income)' ], axis = 1)
+y_mod = x_mod.iloc[:,-1]
+x_mod = x_mod.drop(columns = 'Total Yearly Income [EUR]')
 # Get Dummies
 dummy = pd.get_dummies(x_mod['Housing Situation'])
 x_mod = pd.concat([x_mod,dummy],axis = 1)
@@ -72,20 +77,24 @@ x_mod = x_mod.drop(['Hair Color'],axis = 1)
 #np.any(np.isnan(x_mod))
 # Label Encoding
 
+#x_mod.isnull().sum()
 
 # Move Target Income column to separate variable 
-y_mod = x_mod.iloc[0:,-1]
+
 
 # Removing Target Income column from Input 
-x_mod = x_mod.drop(columns = 'Total Yearly Income [EUR]')
+#x_mod = x_mod.drop(columns = 'Total Yearly Income [EUR]')
 
 #x_mod = x_mod.iloc[1:,:]
 x_train, x_test, y_train, y_test = train_test_split(x_mod, y_mod, test_size = 0.3)
 
 
 model = LinearRegression()
+print(y_train)
+print(y_train.shape)
 model.fit(x_train, y_train)
 
 pred = model.predict(x_test)
 
+print(mae(pred, y_test))
 
