@@ -57,11 +57,24 @@ def female_gender(gen2):
 
 x_mod['Gender'] = x_mod['Gender'].apply(female_gender)
 
+def small_size(sc1):
+    if sc1 <= 10000000:
+        sc1 = 'Small City'    
+    else:
+        sc1 = 'Big City'
+    return sc1
+
+x_mod['Size of City'] = x_mod['Size of City'].apply(small_size)
+
+
 #x_mod['Size of City'] = np.log(x_mod['Size of City'])
+
+
+
 # Graph Plot
-#X = x_mod['Year of Record']
-# = x_mod.iloc[0:,-1]
-#plt.plot(X,Y)
+#X = x_mod['Size of City']
+#Y = x_mod.iloc[0:,-1]
+#plt.plot(X,Y,".")
 
 # Modifying the Datatype of columns
 #x_mod.astype({'Year of Record': 'int64'}).dtypes
@@ -84,9 +97,10 @@ x_mod['Profession'].fillna(method = 'ffill', inplace = True)
 x_mod['Housing Situation'].value_counts()
 # Dealing with Categorial Data
 # Dropping Max Option Columns
-x_mod = x_mod.drop(['Instance', 'Work Experience in Current Job [years]', 'Size of City', 'Wears Glasses'], axis = 1)
+x_mod = x_mod.drop(['Instance', 'Work Experience in Current Job [years]', 'Wears Glasses'], axis = 1)
 y_mod = x_mod.iloc[:,-1]
 x_mod = x_mod.drop(columns = 'Total Yearly Income [EUR]')
+
 # Get Dummies
 dummy = pd.get_dummies(x_mod['Housing Situation'])
 x_mod = pd.concat([x_mod,dummy],axis = 1)
@@ -108,6 +122,9 @@ dummy = pd.get_dummies(x_mod['Hair Color'])
 x_mod = pd.concat([x_mod,dummy],axis = 1)
 x_mod = x_mod.drop(['Hair Color'],axis = 1)
 
+dummy = pd.get_dummies(x_mod['Size of City'])
+x_mod = pd.concat([x_mod,dummy],axis = 1)
+x_mod = x_mod.drop(['Size of City'],axis = 1)
 
 # Label Encoding
 x_mod['Country'] = x_mod['Country'].astype('category').cat.codes
@@ -120,16 +137,16 @@ x_mod['Profession'] = x_mod['Profession'].astype('category').cat.codes
 
 # Move Target Income column to separate variable 
 
-
+#x_mod['Size of City'].value_counts()
 # Removing Target Income column from Input 
 #x_mod = x_mod.drop(columns = 'Total Yearly Income [EUR]')
 
 #x_mod = x_mod.iloc[1:,:]
 x_train, x_t, y_train, y_t = train_test_split(x_mod, y_mod, test_size = 0.3)
 
-#model = RandomForestRegressor(max_depth = 4, n_estimators = 200)
+model = RandomForestRegressor(max_depth = 20, n_estimators = 10)
 
-model = LinearRegression()
+#model = LinearRegression()
 print(y_train)
 print(y_train.shape)
 model.fit(x_train, y_train)
@@ -173,7 +190,15 @@ def female_gender(gen2):
     return gen2
 
 x_test['Gender'] = x_test['Gender'].apply(female_gender)
-      
+
+def small_size(sc1):
+    if sc1 <= 10000000:
+        sc1 = 'Small City'    
+    else:
+        sc1 = 'Big City'
+    return sc1
+
+x_test['Size of City'] = x_test['Size of City'].apply(small_size)
       
 x_test['Year of Record'].fillna(method = 'ffill', inplace = True)
 x_test['Size of City'].fillna(method = 'ffill', inplace = True)
@@ -186,7 +211,7 @@ x_test['University Degree'].fillna(method = 'ffill', inplace = True)
 x_test['Hair Color'].fillna(method = 'ffill', inplace = True)
 x_test['Profession'].fillna(method = 'ffill', inplace = True)
 
-x_test = x_test.drop(['Instance', 'Total Yearly Income [EUR]','Work Experience in Current Job [years]', 'Size of City', 'Wears Glasses'], axis = 1)
+x_test = x_test.drop(['Instance', 'Total Yearly Income [EUR]','Work Experience in Current Job [years]', 'Wears Glasses'], axis = 1)
 
 
 # Get Dummies
@@ -210,6 +235,10 @@ dummy = pd.get_dummies(x_test['Hair Color'])
 x_test = pd.concat([x_test,dummy],axis = 1)
 x_test = x_test.drop(['Hair Color'],axis = 1)
 
+dummy = pd.get_dummies(x_test['Size of City'])
+x_test = pd.concat([x_test,dummy],axis = 1)
+x_test = x_test.drop(['Size of City'],axis = 1)
+
 x_test['Country'] = x_test['Country'].astype('category').cat.codes
 x_test['Profession'] = x_test['Profession'].astype('category').cat.codes
 
@@ -220,7 +249,7 @@ x_test.columns
 x_mod.columns
 #x_test.isnull().sum()
 
-model2 = LinearRegression()
+model2 = RandomForestRegressor(max_depth = 20, n_estimators = 10)
 
 model2.fit(x_mod, y_mod)
 
@@ -231,4 +260,12 @@ with open('output2', 'w') as out:
     for i in pred2:
         out.write(str(i))
         out.write('\n')
-  
+        
+        
+        
+        
+ # To do
+# 1. Reduce large Value columns 
+# 2. FillNa techniques (Missing, Random, Mean, Median)
+# 3. Use of different models      
+# 4. Make Negative Incomes as 0
