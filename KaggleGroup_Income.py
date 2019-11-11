@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import category_encoders as cat
 import xgboost as xgb
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+from feature_engine.categorical_encoders import OneHotCategoricalEncoder
 
 fill_col_dict = {'Year of Record': 1999.0,
  'Gender':'other',
@@ -20,6 +21,16 @@ fill_col_dict = {'Year of Record': 1999.0,
  'Hair Color': 'Black',
  'Size of City': 'Small City',
  'Work Experience in Current Job [years]': '24'}
+
+def encode(labelled_data, unlabelled_data, columns):
+    encoder = OneHotCategoricalEncoder(
+        top_categories=None,
+        variables=columns,  # we can select which variables to encode
+        drop_last=True)
+    encoder.fit(labelled_data)
+    labelled_data = encoder.transform(labelled_data)
+    unlabelled_data = encoder.transform(unlabelled_data)
+    return labelled_data, unlabelled_data
 
 def preprocess(x_local):
     x_local = x_local[np.isfinite(x_local["Age"])]
@@ -116,6 +127,20 @@ def drop_unnessacary_columns(x_local):
 
 
 def make_dummies(x_local):
+    """
+    encoder = OneHotCategoricalEncoder(
+        top_categories=None,
+        variables=columns,  # we can select which variables to encode
+        drop_last=True)
+    encoder.fit(x_local)
+    x_local['Housing Situation'] = encoder.transform(x_local['Housing Situation'])
+    x_local['Satisfaction with employer'] = encoder.transform(x_local['Satisfaction with employer'])
+    x_local['Gender'] = encoder.transform(x_local['Gender'])
+    x_local['University Degree'] = encoder.transform(x_local['University Degree'])
+    x_local['Size of City'] = encoder.transform(x_local['Size of City'])
+ #   unlabelled_data = encoder.transform(unlabelled_data)
+    
+    """
     dummy = pd.get_dummies(x_local['Housing Situation'])
     x_local = pd.concat([x_local, dummy], axis=1)
     x_local = x_local.drop(['Housing Situation'], axis=1)
@@ -150,13 +175,15 @@ def make_dummies(x_local):
     #dummy = pd.get_dummies(x_local['Wears Glasses'])
     #x_local = pd.concat([x_local, dummy], axis=1)
     #x_local = x_local.drop(['Wears Glasses'], axis=1)
-
+    
     return x_local
+
 
 
 trainCol = pd.read_csv('tcd-ml-1920-group-income-train.csv')
 x_mod = trainCol
-x_mod = preprocess(x_mod)
+#x_mod = preprocess(x_mod)
+x_mod['Total Yearly Income [EUR]'] = x_mod['Total Yearly Income [EUR]'].apply(np.log)
 x_mod = replace_wrong_strings(x_mod)
 #x_mod['Yearly Income in addition to Salary (e.g. Rental Income)'] = x_mod['Yearly Income in addition to Salary (e.g. Rental Income)'].astype(float)
 #x_mod = preprocess(x_mod)
@@ -178,13 +205,15 @@ x_mod['Yearly Income in addition to Salary (e.g. Rental Income)'] = x_mod['Yearl
 
 # Remove outliers
 #x_mod = x_mod[x_mod['Total Yearly Income [EUR]'] <= 4000000]
-x_mod.columns
+x_mod.info
 y_mod = x_mod.iloc[:, -1]
 x_mod = drop_unnessacary_columns(x_mod)
 x_mod = make_dummies(x_mod)
 x_mod = x_mod.rename(columns = {'Work Experience in Current Job [years]': 'Work Experience', 'Body Height [cm]': 'Body Height'})
 y_mod = y_mod.rename(columns = {'Total Yearly Income [EUR]': 'Total Yearly Income'})
 x_mod = label_encoding(x_mod)
+x_mod = preprocessing.MinMaxScaler().fit_transform(x_mod)
+x_mod = pd.DataFrame(x_mod)
 
 x_train, x_t, y_train, y_t = train_test_split(x_mod, y_mod, test_size=0.3)
 #model = RandomForestRegressor(max_depth=10, n_estimators=15)
@@ -205,9 +234,14 @@ print(mae(pred, y_t))
 # 34110 (Not Drop)
 
 
+
+
+# ----------------------------- TEST FILE ------------------------ #
+
+
 testCol = pd.read_csv('tcd-ml-1920-group-income-test.csv')
 x_test = testCol
-x_test['Total Yearly Income [EUR]'] = x_test['Total Yearly Income [EUR]'].apply(np.log)
+#x_test['Total Yearly Income [EUR]'] = x_test['Total Yearly Income [EUR]'].apply(np.log)
 x_test = replace_wrong_strings(x_test)
 # x_test['Housing Situation'] = x_test['Housing Situation'].str.replace('0', 'nA')
 x_test['Housing Situation'] = x_test['Housing Situation'].apply(zero_hs)
@@ -216,16 +250,21 @@ x_test['Gender'] = x_test['Gender'].apply(female_gender)
 x_test['Size of City'] = x_test['Size of City'].apply(small_size)
 x_test['University Degree'] = x_test['University Degree'].apply(zero_ud)
 x_test = dealing_with_nan(x_test)
+x_test = group(x_test,'Country',30)
+x_test = group(x_test,'Profession',30)
+x_test['Work Experience in Current Job [years]'] = x_test['Work Experience in Current Job [years]'].astype(np.float)
+x_test['Yearly Income in addition to Salary (e.g. Rental Income)'] = x_test['Yearly Income in addition to Salary (e.g. Rental Income)'].astype(np.float)
 x_test = drop_unnessacary_columns(x_test)
 x_test = make_dummies(x_test)
-
+x_test = x_test.rename(columns = {'Work Experience in Current Job [years]': 'Work Experience', 'Body Height [cm]': 'Body Height'})
 x_test = label_encoding(x_test)
 #print(x_test.info())
 #print(x_mod.info())
 #print(x_test.columns)
 #print(x_mod.columns)
-model2 = RandomForestRegressor(max_depth=10, n_estimators=15)
+#model2 = RandomForestRegressor(max_depth=10, n_estimators=15)
 #model2 = LinearRegression()
+model2 = xgb.XGBRegressor(objective = "reg:linear", booster = 'gbtree', random_state = 42)
 model2.fit(x_mod, y_mod)
 pred2 = model2.predict(x_test)
 pred2 = np.exp(pred2)
@@ -234,3 +273,9 @@ with open('output3', 'w') as out:
     for i in pred2:
         out.write(str(i))
         out.write('\n')
+
+# To do
+# 1. Reduce large Value columns
+# 2. FillNa techniques (Missing, Random, Mean, Median)
+# 3. Use of different models
+# 4. Make Negative Incomes as 0
