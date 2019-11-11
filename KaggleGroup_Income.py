@@ -110,7 +110,7 @@ def dealing_with_nan(x_local):
 
 
 def drop_unnessacary_columns(x_local):
-    x_local = x_local.drop(['Instance', 'Hair Color','Country','Profession'], axis=1)
+    x_local = x_local.drop(['Instance', 'Hair Color'], axis=1)
     x_local = x_local.drop(columns='Total Yearly Income [EUR]')
     return x_local
 
@@ -184,11 +184,12 @@ x_mod = drop_unnessacary_columns(x_mod)
 x_mod = make_dummies(x_mod)
 x_mod = x_mod.rename(columns = {'Work Experience in Current Job [years]': 'Work Experience', 'Body Height [cm]': 'Body Height'})
 y_mod = y_mod.rename(columns = {'Total Yearly Income [EUR]': 'Total Yearly Income'})
-#x_mod = label_encoding(x_mod)
+x_mod = label_encoding(x_mod)
+
 x_train, x_t, y_train, y_t = train_test_split(x_mod, y_mod, test_size=0.3)
 #model = RandomForestRegressor(max_depth=10, n_estimators=15)
 #model = LinearRegression()
-model = xgb.XGBRegressor(objective = "reg:linear", random_state = 42)
+model = xgb.XGBRegressor(objective = "reg:linear", booster = 'gbtree', random_state = 42)
 print(y_train)
 print(y_train.shape)
 model.fit(x_train, y_train)
@@ -218,7 +219,7 @@ x_test = dealing_with_nan(x_test)
 x_test = drop_unnessacary_columns(x_test)
 x_test = make_dummies(x_test)
 
-#x_test = label_encoding(x_test)
+x_test = label_encoding(x_test)
 #print(x_test.info())
 #print(x_mod.info())
 #print(x_test.columns)
@@ -233,9 +234,3 @@ with open('output3', 'w') as out:
     for i in pred2:
         out.write(str(i))
         out.write('\n')
-
-# To do
-# 1. Reduce large Value columns
-# 2. FillNa techniques (Missing, Random, Mean, Median)
-# 3. Use of different models
-# 4. Make Negative Incomes as 0
