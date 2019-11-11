@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import BayesianRidge
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error as mae
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
@@ -78,8 +79,8 @@ def zero_hs(hs1):
 def zero_gender(gen1):
     if gen1 == '0' or gen1 == 0:
         gen1 = 'male'
-    if gen1 == 'unknown':
-        gen1 == 'other'
+ #   if gen1 == 'unknown':
+  #      gen1 = 'other'
     return gen1
 
 
@@ -90,7 +91,7 @@ def female_gender(gen2):
 
 
 def small_size(sc1):
-    if sc1 <= 10000000:
+    if sc1 <= 100000:
         sc1 = 'Small City'
     else:
         sc1 = 'Big City'
@@ -216,9 +217,12 @@ x_mod = preprocessing.MinMaxScaler().fit_transform(x_mod)
 x_mod = pd.DataFrame(x_mod)
 
 x_train, x_t, y_train, y_t = train_test_split(x_mod, y_mod, test_size=0.3)
+
+
 #model = RandomForestRegressor(max_depth=10, n_estimators=15)
 #model = LinearRegression()
-model = xgb.XGBRegressor(objective = "reg:linear", booster = 'gbtree', random_state = 42)
+#model = xgb.XGBRegressor(objective = "reg:linear", booster = 'gbtree', random_state = 42)
+model = GradientBoostingRegressor(n_estimators = 40, max_depth = 8, random_state = 3)
 print(y_train)
 print(y_train.shape)
 model.fit(x_train, y_train)
@@ -264,7 +268,8 @@ x_test = label_encoding(x_test)
 #print(x_mod.columns)
 #model2 = RandomForestRegressor(max_depth=10, n_estimators=15)
 #model2 = LinearRegression()
-model2 = xgb.XGBRegressor(objective = "reg:linear", booster = 'gbtree', random_state = 42)
+#model2 = xgb.XGBRegressor(objective = "reg:linear", booster = 'gbtree', random_state = 42)
+model2 = GradientBoostingRegressor(n_estimators = 40, max_depth = 8, random_state = 3)
 model2.fit(x_mod, y_mod)
 pred2 = model2.predict(x_test)
 pred2 = np.exp(pred2)
